@@ -1,0 +1,718 @@
+/* ============================================================
+   ActivityGenerator.css — complete ground-up visual redesign
+   All classes prefixed ag- to avoid any Tailwind conflicts
+   ============================================================ */
+
+/* ── Keyframe animations ─────────────────────────────────── */
+
+@keyframes ag-bg-shift {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes ag-orb-1 {
+  0%,  100% { transform: translate(0px, 0px) scale(1); }
+  33%        { transform: translate(40px, -60px) scale(1.06); }
+  66%        { transform: translate(-25px, 25px) scale(0.94); }
+}
+
+@keyframes ag-orb-2 {
+  0%,  100% { transform: translate(0px, 0px); }
+  50%        { transform: translate(-50px, -35px); }
+}
+
+@keyframes ag-orb-3 {
+  0%,  100% { transform: translate(0px, 0px) scale(1); }
+  40%        { transform: translate(25px, 45px) scale(0.91); }
+  80%        { transform: translate(-35px, -25px) scale(1.06); }
+}
+
+@keyframes ag-orb-4 {
+  0%,  100% { transform: translate(0px, 0px); }
+  60%        { transform: translate(55px, -25px); }
+}
+
+@keyframes ag-orb-5 {
+  0%,  100% { transform: translate(0px, 0px); }
+  45%        { transform: translate(-35px, 35px); }
+}
+
+@keyframes ag-pulse-btn {
+  0%,  100% {
+    box-shadow:
+      0 4px 20px rgba(249, 115, 22, 0.40),
+      0 0 0 0 rgba(249, 115, 22, 0);
+  }
+  50% {
+    box-shadow:
+      0 8px 40px rgba(249, 115, 22, 0.65),
+      0 0 0 10px rgba(249, 115, 22, 0.08);
+  }
+}
+
+@keyframes ag-spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes fadein {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Animated page background ──────────────────────────────── */
+
+.ag-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background: linear-gradient(
+    135deg,
+    #fce4ec 0%,
+    #ffecd2 20%,
+    #e8d5f5 45%,
+    #ffe0ee 65%,
+    #ffecd2 85%,
+    #fce4ec 100%
+  );
+  background-size: 400% 400%;
+  animation: ag-bg-shift 14s ease infinite;
+}
+
+/* ── Floating blurred orbs ──────────────────────────────────── */
+
+.ag-orb {
+  position: fixed;
+  z-index: 0;
+  border-radius: 50%;
+  pointer-events: none;
+  filter: blur(72px);
+  opacity: 0.55;
+}
+
+.ag-orb-1 {
+  width: 420px; height: 420px;
+  background: #ffb3c6;
+  top: -80px; left: -80px;
+  animation: ag-orb-1 20s ease-in-out infinite;
+}
+
+.ag-orb-2 {
+  width: 380px; height: 380px;
+  background: #ffd6a5;
+  top: 25%; right: -100px;
+  animation: ag-orb-2 25s ease-in-out infinite;
+}
+
+.ag-orb-3 {
+  width: 320px; height: 320px;
+  background: #d4b8f0;
+  bottom: 5%; left: 5%;
+  animation: ag-orb-3 18s ease-in-out infinite;
+}
+
+.ag-orb-4 {
+  width: 260px; height: 260px;
+  background: #ffcba4;
+  bottom: 15%; right: 15%;
+  animation: ag-orb-4 22s ease-in-out infinite;
+}
+
+.ag-orb-5 {
+  width: 220px; height: 220px;
+  background: #b5e8f7;
+  top: 55%; left: 35%;
+  animation: ag-orb-5 28s ease-in-out infinite;
+}
+
+/* ── Content wrapper ─────────────────────────────────────────── */
+
+.ag-content {
+  position: relative;
+  z-index: 1;
+  max-width: 820px;
+  margin: 0 auto;
+  padding: 28px 16px 56px;
+  font-family: 'Nunito', system-ui, sans-serif;
+}
+
+/* ── Page header ─────────────────────────────────────────────── */
+
+.ag-header-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.ag-heading {
+  font-family: 'Nunito', system-ui, sans-serif;
+  font-size: clamp(34px, 5.5vw, 48px);
+  font-weight: 900;
+  line-height: 1.1;
+  letter-spacing: -0.5px;
+  margin: 0 0 6px 0;
+  /* Gradient text — two-property approach for cross-browser reliability */
+  background: linear-gradient(135deg, #f97316 0%, #ec4899 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
+}
+
+.ag-subheading {
+  font-family: 'Nunito', system-ui, sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  color: #9ca3af;
+  margin: 0;
+}
+
+/* ── API key button ──────────────────────────────────────────── */
+
+.ag-api-btn {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  border-radius: 14px;
+  font-family: 'Nunito', system-ui, sans-serif;
+  font-size: 13px;
+  font-weight: 800;
+  border: 2px solid;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  white-space: nowrap;
+}
+
+.ag-api-btn--on {
+  background: #f0fdf4;
+  color: #15803d;
+  border-color: #bbf7d0;
+}
+.ag-api-btn--on:hover { background: #dcfce7; }
+
+.ag-api-btn--off {
+  background: #fff7ed;
+  color: #c2410c;
+  border-color: #fed7aa;
+}
+.ag-api-btn--off:hover { background: #ffedd5; }
+
+/* ── Main form card ──────────────────────────────────────────── */
+
+.ag-card {
+  background: #ffffff;
+  border-radius: 32px;
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.04),
+    0 8px 24px rgba(0, 0, 0, 0.07),
+    0 32px 80px rgba(0, 0, 0, 0.07),
+    inset 0 1px 0 rgba(255, 255, 255, 1),
+    inset 0 0 0 1.5px rgba(251, 146, 60, 0.18);
+  padding: 40px;
+  margin-bottom: 24px;
+}
+
+/* ── Icon strip divider ──────────────────────────────────────── */
+
+.ag-icon-strip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 24px;
+  border-bottom: 1.5px solid #f3f4f6;
+  margin-bottom: 28px;
+}
+
+.ag-strip-label {
+  font-family: 'Nunito', system-ui, sans-serif;
+  font-size: 11px;
+  font-weight: 800;
+  color: #fb923c;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-left: 4px;
+}
+
+/* ── Form grid ───────────────────────────────────────────────── */
+
+.ag-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.ag-col-span-2 {
+  grid-column: 1 / -1;
+}
+
+/* ── Labels ──────────────────────────────────────────────────── */
+
+.ag-label {
+  font-family: 'Nunito', system-ui, sans-serif;
+  font-size: 13px;
+  font-weight: 800;
+  color: #374151;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.ag-label-note {
+  font-weight: 500;
+  color: #9ca3af;
+  font-size: 11px;
+}
+
+/* ── Text inputs & textarea ──────────────────────────────────── */
+
+.ag-input {
+  font-family: 'Nunito', system-ui, sans-serif;
+  width: 100%;
+  border-radius: 14px;
+  border: 2px solid #e5e7eb;
+  background: #fafaf9;
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+  outline: none;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+  box-sizing: border-box;
+  display: block;
+  resize: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.ag-input:focus {
+  border-color: #f97316;
+  box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.14);
+  background: #ffffff;
+}
+
+.ag-input::placeholder {
+  color: #b0b0b0;
+  font-weight: 500;
+}
+
+/* ── Select (duration) ───────────────────────────────────────── */
+
+.ag-select {
+  font-family: 'Nunito', system-ui, sans-serif;
+  width: 100%;
+  border-radius: 14px;
+  border: 2px solid #e5e7eb;
+  background: #fafaf9;
+  padding: 12px 40px 12px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+  outline: none;
+  cursor: pointer;
+  box-sizing: border-box;
+  -webkit-appearance: none;
+  appearance: none;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239ca3af' stroke-width='2.5'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 18px;
+}
+
+.ag-select:focus {
+  border-color: #f97316;
+  box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.14);
+  background-color: #ffffff;
+}
+
+/* ── Age group buttons ───────────────────────────────────────── */
+
+.ag-age-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ag-age-btn {
+  font-family: 'Nunito', system-ui, sans-serif;
+  padding: 10px 22px;
+  border-radius: 999px;
+  border: 2px solid #e5e7eb;
+  background: #ffffff;
+  color: #6b7280;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  white-space: nowrap;
+  line-height: 1;
+}
+
+.ag-age-btn:hover:not(.ag-age-btn--on) {
+  border-color: #f97316;
+  color: #f97316;
+  background: #fff7f0;
+  transform: scale(1.04);
+}
+
+.ag-age-btn--on {
+  background: linear-gradient(135deg, #f97316 0%, #ec4899 100%);
+  border-color: transparent;
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(249, 115, 22, 0.38);
+  transform: scale(1.06);
+}
+
+/* ── Weather buttons ─────────────────────────────────────────── */
+
+.ag-weather-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.ag-weather-btn {
+  font-family: 'Nunito', system-ui, sans-serif;
+  width: 80px;
+  height: 80px;
+  border-radius: 16px;
+  border: 2px solid #e5e7eb;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  flex-shrink: 0;
+}
+
+.ag-weather-btn:hover:not(.ag-weather-btn--on) {
+  transform: translateY(-3px);
+  box-shadow: 0 7px 20px rgba(0, 0, 0, 0.10);
+  border-color: #fdba74;
+}
+
+.ag-weather-emoji {
+  font-size: 30px;
+  line-height: 1;
+  display: block;
+}
+
+.ag-weather-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: #6b7280;
+  display: block;
+}
+
+.ag-weather-btn--on {
+  /* Gradient border trick */
+  background:
+    linear-gradient(white, white) padding-box,
+    linear-gradient(135deg, #f97316, #ec4899) border-box;
+  border: 2.5px solid transparent;
+  box-shadow: 0 4px 18px rgba(249, 115, 22, 0.28);
+  transform: translateY(-2px);
+}
+
+.ag-weather-btn--on .ag-weather-label {
+  color: #f97316;
+  font-weight: 800;
+}
+
+/* Weather hint pills */
+.ag-weather-hint {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-family: 'Nunito', system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.ag-weather-hint--blue {
+  background: #eff6ff;
+  color: #2563eb;
+}
+
+.ag-weather-hint--orange {
+  background: #fff7ed;
+  color: #ea580c;
+}
+
+/* ── Attendance stepper ──────────────────────────────────────── */
+
+.ag-attendance-row {
+  display: flex;
+  gap: 8px;
+}
+
+.ag-stepper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #ffffff;
+  border: 2px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 10px 14px;
+  transition: border-color 0.18s;
+  flex-shrink: 0;
+}
+
+.ag-stepper:hover {
+  border-color: #fdba74;
+}
+
+.ag-step-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: #fff7f0;
+  color: #f97316;
+  font-size: 18px;
+  font-weight: 900;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.ag-step-btn:hover {
+  background: #fed7aa;
+}
+
+.ag-step-count {
+  font-family: 'Nunito', system-ui, sans-serif;
+  font-size: 15px;
+  font-weight: 900;
+  color: #111827;
+  min-width: 24px;
+  text-align: center;
+}
+
+.ag-step-unit {
+  font-family: 'Nunito', system-ui, sans-serif;
+  font-size: 12px;
+  color: #9ca3af;
+  font-weight: 600;
+}
+
+/* ── Helper text ─────────────────────────────────────────────── */
+
+.ag-helper {
+  font-family: 'Nunito', system-ui, sans-serif;
+  font-size: 12px;
+  color: #fb923c;
+  font-weight: 600;
+  margin-top: 6px;
+  display: block;
+}
+
+/* ── Error box ───────────────────────────────────────────────── */
+
+.ag-error {
+  background: #fff7ed;
+  border: 2px solid #fed7aa;
+  border-radius: 14px;
+  padding: 14px 16px;
+  font-family: 'Nunito', system-ui, sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: #c2410c;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+/* ── Generate button ─────────────────────────────────────────── */
+
+.ag-generate-btn {
+  font-family: 'Nunito', system-ui, sans-serif;
+  width: 100%;
+  height: 60px;
+  border-radius: 16px;
+  border: none;
+  background: linear-gradient(135deg, #f97316 0%, #f43f5e 100%);
+  color: #ffffff;
+  font-size: 18px;
+  font-weight: 900;
+  cursor: pointer;
+  animation: ag-pulse-btn 2.8s ease-in-out infinite;
+  transition: opacity 0.18s ease, transform 0.1s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  letter-spacing: 0.01em;
+}
+
+.ag-generate-btn:hover:not(:disabled) {
+  opacity: 0.91;
+  transform: translateY(-2px);
+}
+
+.ag-generate-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  animation: none;
+  transform: none;
+}
+
+.ag-spin {
+  display: inline-block;
+  animation: ag-spin 1s linear infinite;
+}
+
+/* ── Responsive ──────────────────────────────────────────────── */
+
+@media (max-width: 620px) {
+  /* Single-column form */
+  .ag-form-grid {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+
+  /* Content area */
+  .ag-content {
+    padding: 20px 12px 28px;
+  }
+
+  /* Card */
+  .ag-card {
+    padding: 20px 16px;
+    border-radius: 24px;
+  }
+
+  /* Heading */
+  .ag-heading {
+    font-size: clamp(26px, 7.5vw, 32px);
+  }
+
+  /* Age buttons — compact to fit all on one row */
+  .ag-age-row {
+    gap: 6px;
+  }
+
+  .ag-age-btn {
+    padding: 8px 10px;
+    font-size: 12px;
+    min-height: 40px;
+  }
+
+  /* Weather — 2×3 grid instead of single row */
+  .ag-weather-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+
+  .ag-weather-btn {
+    width: 100%;
+    height: 72px;
+    border-radius: 14px;
+  }
+
+  .ag-weather-emoji {
+    font-size: 26px;
+  }
+
+  .ag-weather-label {
+    font-size: 10px;
+  }
+
+  /* Generate button */
+  .ag-generate-btn {
+    height: 56px;
+    font-size: 17px;
+    border-radius: 14px;
+  }
+
+  /* Attendance row — stack on very narrow screens */
+  .ag-attendance-row {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .ag-stepper {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  /* Reduce orb count and opacity on mobile for performance */
+  .ag-orb {
+    opacity: 0.2;
+    filter: blur(40px);
+  }
+
+  .ag-orb-1 { width: 240px; height: 240px; }
+  .ag-orb-2 { width: 200px; height: 200px; }
+  .ag-orb-3 { display: none; }
+  .ag-orb-4 { display: none; }
+  .ag-orb-5 { display: none; }
+
+  /* Slow down orb animations */
+  .ag-orb-1 { animation-duration: 30s; }
+  .ag-orb-2 { animation-duration: 40s; }
+}
+
+/* ── Tablet (768px – 1023px): breathing room adjustments ─── */
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  /* Slightly reduced card padding — 40px is a touch heavy at 768px */
+  .ag-card {
+    padding: 32px 28px;
+  }
+
+  /* More horizontal breathing room */
+  .ag-content {
+    padding: 32px 20px 64px;
+  }
+}
+
+/* ── Print — hide all decorative bg elements ────────────────── */
+
+@media print {
+  .ag-bg,
+  .ag-orb,
+  .ag-orb-1,
+  .ag-orb-2,
+  .ag-orb-3,
+  .ag-orb-4,
+  .ag-orb-5 {
+    display: none !important;
+  }
+}
+
+/* ── All-ages button ─────────────────────────────────────────── */
+
+.ag-age-btn--all {
+  border-color: #c4b5fd;
+  color: #7c3aed;
+  background: linear-gradient(135deg, #fdf4ff 0%, #ede9fe 100%);
+}
+
+.ag-age-btn--all:hover:not(.ag-age-btn--on) {
+  border-color: #7c3aed;
+  color: #5b21b6;
+  background: linear-gradient(135deg, #f5f3ff 0%, #ddd6fe 100%);
+  transform: scale(1.04);
+}
+
+.ag-age-btn--all.ag-age-btn--on {
+  background: linear-gradient(135deg, #7c3aed 0%, #a21caf 100%);
+  box-shadow: 0 4px 14px rgba(124, 58, 237, 0.38);
+  border-color: transparent;
+}
