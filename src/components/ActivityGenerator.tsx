@@ -1273,20 +1273,7 @@ function GeneratedActivityCard({
   // regardless of prop propagation timing. Prop used as fallback.
   const inventory = useMemo(() => {
     const fromStorage = storage.getSupplies();
-    const result = fromStorage.length > 0 ? fromStorage : inventoryItems;
-    console.log(`[Playgroup] Card: "${activity.name}"`);
-    console.log('[Playgroup] Saved inventory:', result);
-    console.log('[Playgroup] Activity materials:', activity.materials);
-    result.forEach((inv) => {
-      activity.materials.forEach((mat) => {
-        const i = inv.toLowerCase().trim();
-        const m = mat.toLowerCase().trim();
-        if (i === m || i.includes(m) || m.includes(i)) {
-          console.log(`[Playgroup] MATCH: inventory "${inv}" ↔ material "${mat}"`);
-        }
-      });
-    });
-    return result;
+    return fromStorage.length > 0 ? fromStorage : inventoryItems;
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [inventoryItems]);
 

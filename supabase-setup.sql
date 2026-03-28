@@ -33,3 +33,19 @@ create policy "Users can delete own data"
 
 -- 4. Index for fast per-user lookups
 create index if not exists user_data_user_id_idx on user_data (user_id);
+
+-- 5. Create the feedback table (used by the in-app feedback button)
+create table if not exists feedback (
+  id          uuid        default gen_random_uuid() primary key,
+  message     text        not null,
+  name        text,
+  email       text,
+  created_at  timestamptz default now()
+);
+
+-- Enable RLS — anyone can submit feedback, but no one can read it via client
+alter table feedback enable row level security;
+
+create policy "Anyone can submit feedback"
+  on feedback for insert
+  with check (true);

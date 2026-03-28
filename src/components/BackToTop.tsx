@@ -18,7 +18,7 @@ export default function BackToTop() {
       onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
       style={{
         position: 'fixed',
-        bottom: 24,
+        bottom: 120,
         right: 24,
         zIndex: 400,
         padding: '10px 16px',
