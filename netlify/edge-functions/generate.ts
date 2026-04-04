@@ -1,5 +1,6 @@
 // Netlify Edge Function — server-side proxy for Anthropic API.
 // Route is declared in netlify.toml [[edge_functions]] — no export const config here.
+// Streams the Anthropic SSE response directly to the client so activities appear progressively.
 
 export default async function handler(req: Request): Promise<Response> {
   const corsHeaders = {
@@ -37,7 +38,9 @@ export default async function handler(req: Request): Promise<Response> {
       );
     }
 
-    parsed.stream = false;
+    // Keep stream: true — pipe Anthropic's SSE directly to the client.
+    // Netlify Edge Functions support streaming natively via Deno's fetch body passthrough.
+    parsed.stream = true;
 
     const anthropic = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -49,12 +52,25 @@ export default async function handler(req: Request): Promise<Response> {
       body: JSON.stringify(parsed),
     });
 
-    // Forward the raw response text — avoids a second JSON parse that can crash
-    const responseText = await anthropic.text();
+    if (!anthropic.ok) {
+      // Non-2xx from Anthropic — read body and forward as JSON error
+      const errText = await anthropic.text();
+      let errBody: unknown;
+      try { errBody = JSON.parse(errText); } catch { errBody = { error: { message: errText } }; }
+      return new Response(JSON.stringify(errBody), {
+        status: anthropic.status,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      });
+    }
 
-    return new Response(responseText, {
+    // Pipe the SSE stream straight through — client's existing SSE parser handles it
+    return new Response(anthropic.body, {
       status: anthropic.status,
-      headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      headers: {
+        'Content-Type': anthropic.headers.get('content-type') ?? 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        ...corsHeaders,
+      },
     });
 
   } catch (err) {
