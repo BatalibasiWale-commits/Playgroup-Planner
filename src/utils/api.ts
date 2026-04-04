@@ -226,7 +226,7 @@ Group the 15 activities in order: 3 arts-crafts, then 3 sensory, then 3 music-mo
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
-        max_tokens: 8000,
+        max_tokens: 16000,
         stream: true,
         messages: [{ role: 'user', content: prompt }],
       }),
