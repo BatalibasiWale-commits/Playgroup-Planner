@@ -78,6 +78,7 @@ export default function ProfilePage({ onProfileChange, onSuppliesChange, showNew
   const [supplies, setSupplies] = useState<string[]>(() => storage.getSupplies());
   const [newSupply, setNewSupply] = useState('');
   const mountedRef = useRef(false);
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Auto-save profile whenever any field changes and notify App
   useEffect(() => {
@@ -85,7 +86,11 @@ export default function ProfilePage({ onProfileChange, onSuppliesChange, showNew
     storage.saveProfile(profile);
     onProfileChange(profile);
     if (mountedRef.current) {
-      onToast?.('Profile updated! ✨');
+      // Debounce the toast — only show after typing stops for 1s
+      if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+      toastTimerRef.current = setTimeout(() => {
+        onToast?.('Profile updated! ✨');
+      }, 1000);
     } else {
       mountedRef.current = true;
     }
