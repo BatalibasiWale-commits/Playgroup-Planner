@@ -79,6 +79,23 @@ export default function ActivityGenerator({
   const [theme, setTheme] = useState(() => _saved?.theme ?? '');
   const [ageGroup, setAgeGroup] = useState<AgeGroup>(() => (_saved?.ageGroup as AgeGroup) || profile.ageRange || '2-3');
   const [materials, setMaterials] = useState(() => _saved?.materials ?? supplies.join(', '));
+  const prevSuppliesRef = useRef<string[]>(supplies);
+
+  // Sync new supplies into the materials field as they are added in Profile
+  useEffect(() => {
+    const prev = prevSuppliesRef.current;
+    const added = supplies.filter(s => !prev.includes(s));
+    if (added.length > 0) {
+      setMaterials(current => {
+        const existing = current.split(',').map(s => s.trim()).filter(Boolean);
+        const toAdd = added.filter(n => !existing.some(e => e.toLowerCase() === n.toLowerCase()));
+        if (toAdd.length === 0) return current;
+        return current.trim() ? `${current.trim()}, ${toAdd.join(', ')}` : toAdd.join(', ');
+      });
+    }
+    prevSuppliesRef.current = supplies;
+  }, [supplies]);
+
   const [duration, setDuration] = useState(() => _saved?.duration ?? 60);
   const [weather, setWeather] = useState(() => _saved?.weather ?? '');
   const [attendanceCount, setAttendanceCount] = useState(() => _saved?.attendanceCount ?? profile.groupSize ?? 8);
