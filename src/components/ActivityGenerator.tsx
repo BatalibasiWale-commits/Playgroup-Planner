@@ -4,6 +4,7 @@ import { ACTIVITY_TYPE_CONFIG, AGE_GROUP_CONFIG } from '../types';
 import { generateActivities } from '../utils/api';
 import { getPastActivityTitles, saveActivityTitles } from '../utils/activityHistory';
 import { storage } from '../utils/storage';
+import SolitaireGame from './SolitaireGame';
 import './ActivityGenerator.css';
 
 interface Props {
@@ -823,41 +824,12 @@ export default function ActivityGenerator({
 
         </div>{/* /ag-card */}
 
-        {/* ── Thinking animation ── */}
+        {/* ── Solitaire game (shown while generating) ── */}
         {generating && (
-          <div className="bg-white rounded-3xl shadow-lg border border-purple-100 p-10 mb-6 text-center">
-            <div className="relative inline-block mb-5">
-              <span className="text-7xl animate-bounce inline-block">🧠</span>
-              {[
-                { emoji: '🎨', pos: 'top-0 -left-6',  delay: '0ms' },
-                { emoji: '🎵', pos: '-top-4 left-8',   delay: '200ms' },
-                { emoji: '🌿', pos: '-top-2 left-20',  delay: '400ms' },
-                { emoji: '⭐', pos: 'top-2 -left-8',   delay: '600ms' },
-                { emoji: '🎪', pos: 'top-2 left-24',   delay: '300ms' },
-              ].map(({ emoji, pos, delay }) => (
-                <span key={emoji}
-                  className={`absolute ${pos} text-xl animate-ping`}
-                  style={{ animationDuration: '1.5s', animationDelay: delay }}>
-                  {emoji}
-                </span>
-              ))}
-            </div>
-            <p
-              key={loadingMsgIndex}
-              className="text-xl font-black text-purple-600 mb-1 transition-all"
-              style={{ animation: 'fadein 0.4s ease' }}
-            >
-              {LOADING_MESSAGES[loadingMsgIndex].text} {LOADING_MESSAGES[loadingMsgIndex].emoji}
-            </p>
-            <p className="text-sm text-gray-400 font-medium">Creating a magical session just for you!</p>
-            <div className="flex justify-center gap-1.5 mt-5">
-              {[0, 150, 300, 450, 600].map((delay) => (
-                <span key={delay}
-                  className="w-2 h-2 bg-gradient-to-r from-orange-300 to-pink-300 rounded-full animate-bounce"
-                  style={{ animationDelay: `${delay}ms` }} />
-              ))}
-            </div>
-          </div>
+          <SolitaireGame
+            loadingMessage={LOADING_MESSAGES[loadingMsgIndex].text}
+            loadingEmoji={LOADING_MESSAGES[loadingMsgIndex].emoji}
+          />
         )}
 
         {/* ══════════════════════════════════════════════════════
