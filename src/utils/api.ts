@@ -45,7 +45,6 @@ function sanitizeActivity(raw: GeneratedActivity, theme: string): Activity {
       adhd: n.adhd ? String(n.adhd) : null,
       communication: n.communication ? String(n.communication) : null,
     };
-    // Only keep if at least one category is non-null
     if (!Object.values(neuroAdaptations).some(Boolean)) neuroAdaptations = undefined;
   }
 
@@ -77,148 +76,35 @@ const WEATHER_LABELS: Record<string, string> = {
   cold: 'Cold ❄️',
 };
 
-export async function generateActivities(
-  theme: string,
-  ageGroup: string,
-  materials: string,
-  duration: number,
-  onStream: (text: string) => void,
-  weather = '',
-  attendance = { count: 0, ageNote: '' },
-  includeNeuroAdaptations = false,
-  pastActivities: string[] = [],
-): Promise<Activity[]> {
-  const isAllAges = ageGroup === '0-5';
+const CATEGORY_LABELS: Record<ActivityType, string> = {
+  'arts-crafts': 'hands-on making, drawing, painting, crafting',
+  'sensory': 'touch, smell, texture, messy play, sensory exploration',
+  'music-movement': 'songs, rhythm, dance, movement games',
+  'storytelling': 'stories, puppets, role-play, books, imaginative play',
+  'outdoor': 'garden, nature, physical play, fresh-air activities',
+};
 
-  const weatherLine = weather
-    ? `Today's Weather: ${WEATHER_LABELS[weather] ?? weather}`
-    : '';
-  const weatherNote =
-    weather === 'rainy' || weather === 'cold'
-      ? 'IMPORTANT: Since it is rainy/cold, the outdoor section activities must be modified to work indoors — suggest indoor alternatives that capture the spirit of outdoor play.'
-      : weather === 'hot'
-      ? 'For the outdoor section, prioritise water play, shade-based activities, and cooling activities suitable for hot weather.'
-      : '';
-  const attendanceLine =
-    attendance.count > 0
-      ? `Expected Attendance: ${attendance.count} children${attendance.ageNote ? ` (${attendance.ageNote})` : ''}. Scale materials and group management suggestions for ${attendance.count} children.`
-      : '';
+const CATEGORY_ORDER: Record<ActivityType, number> = {
+  'arts-crafts': 0,
+  'sensory': 1,
+  'music-movement': 2,
+  'storytelling': 3,
+  'outdoor': 4,
+};
 
-  const materialsBlock = materials
-    ? `Available Materials: ${materials}
-
-IMPORTANT MATERIALS CONSTRAINT: Only suggest activities that can be made using the materials listed above. Do not suggest any activity that requires materials not on this list. Every item in each activity's "materials" array must be something from the Available Materials list (or a basic consumable like water, tape, or scissors that any playgroup would have).`
-    : 'Available Materials: basic craft supplies, paper, crayons, play dough, blocks';
-
-  const ageGroupLine = isAllAges
-    ? 'Age Group: Mixed ages, 0–5 years (babies through preschoolers all attending together)'
-    : `Age Group: ${ageGroup} years old`;
-
-  const allAgesInstructions = isAllAges ? `
-IMPORTANT — MIXED AGE SESSION: This session includes children from 0–5 years old together. For each activity you must:
-1. Choose the age range the activity is BEST suited for as its primary audience (e.g. "2–3 yrs" or "3–5 yrs")
-2. Provide brief, practical adaptations for the OTHER age groups so every child can participate
-
-For each activity include:
-- "bestAgeGroup": a short string like "2–3 yrs" indicating the primary target age
-- "ageAdaptations": an object with keys for each OTHER age band (not the bestAgeGroup), e.g.:
-  {
-    "0–1 yrs": "Let babies explore materials through sensory touch rather than completing the craft",
-    "1–2 yrs": "Pre-cut all shapes so toddlers can focus on sticking only",
-    "3–5 yrs": "Challenge older kids to design freely and cut their own shapes"
-  }
-Only include the age bands that are NOT the bestAgeGroup. Keep each adaptation to 1–2 sentences — practical and specific.` : '';
-
-  const jsonSchemaExample = isAllAges ? `[
-  {
-    "name": "Fun activity name",
-    "description": "Brief 1-2 sentence description of the activity",
-    "activityType": "arts-crafts",
-    "ageGroups": ["1-2", "2-3", "3-5"],
-    "materials": ["material 1", "material 2"],
-    "instructions": ["Step 1: ...", "Step 2: ...", "Step 3: ..."],
-    "developmentalBenefits": ["benefit 1", "benefit 2"],
-    "durationEstimate": "15–20 mins",
-    "bestAgeGroup": "2–3 yrs",
-    "ageAdaptations": {
-      "0–1 yrs": "Adaptation for babies",
-      "1–2 yrs": "Adaptation for young toddlers",
-      "3–5 yrs": "Adaptation for preschoolers"
-    }
-  }
-]` : `[
-  {
-    "name": "Fun activity name",
-    "description": "Brief 1-2 sentence description of the activity",
-    "activityType": "arts-crafts",
-    "ageGroups": ["array of applicable: 0-1, 1-2, 2-3, 3-5"],
-    "materials": ["material 1", "material 2"],
-    "instructions": ["Step 1: ...", "Step 2: ...", "Step 3: ..."],
-    "developmentalBenefits": ["benefit 1", "benefit 2"],
-    "durationEstimate": "10–15 mins"
-  }
-]`;
-
-  const durationNote = isAllAges
-    ? 'For "durationEstimate": provide a realistic time range for running this activity, factoring in the mixed-age group — transitions take longer with babies present. e.g. "10–15 mins", "20–25 mins".'
-    : 'For "durationEstimate": provide a realistic time range for running this activity with the given age group, e.g. "5–10 mins", "15–20 mins", "20–30 mins". Younger children (0–2 yrs) generally need more time for setup/transitions and have shorter attention spans, so factor that in. The estimate should reflect actual engaged activity time.';
-
-  const neuroSection = includeNeuroAdaptations ? `
-
-🧠 NEURODIVERSITY-FRIENDLY ADAPTATIONS REQUIRED:
-For EVERY activity, include a "neuroAdaptations" field with practical, specific adaptations to support children with diverse needs. Each sub-field should be 1–2 sentences (or null if genuinely not applicable to this specific activity). Focus on what the facilitator actually does differently — be concrete, not vague.
-
-"neuroAdaptations": {
-  "sensory": "👋 Sensory — adjustments for sensory sensitivities (e.g. offer gloves for messy textures, reduce background noise, dim lighting for overstimulating activities)",
-  "fineMotor": "✂️ Fine Motor — modifications for children with limited hand dexterity (e.g. pre-cut shapes, use larger tools, tape materials to the table)",
-  "attention": "⏱ Attention — strategies for short attention spans (e.g. break into 2-minute micro-steps, use a visual timer, provide a clear 'all done' signal)",
-  "autism": "🔄 Autism — predictability and structure supports (e.g. show a visual sequence card before starting, warn before transitions, offer a 'helper' role)",
-  "adhd": "⚡ ADHD — movement and engagement supports (e.g. let children stand or use a wobble seat, build in a movement break halfway, offer a fidget item during listening parts)",
-  "communication": "💬 Communication — AAC and low-verbal options (e.g. use gesture + single words, provide picture choice cards, accept pointing or nodding as valid responses)"
+interface SharedParams {
+  theme: string;
+  ageGroup: string;
+  materials: string;
+  duration: number;
+  weather: string;
+  attendance: { count: number; ageNote: string };
+  includeNeuroAdaptations: boolean;
+  pastActivities: string[];
 }
 
-Set a category to null only if it truly has no bearing on this specific activity.` : '';
-
-  const neuroSchemaLine = includeNeuroAdaptations ? `
-    "neuroAdaptations": {
-      "sensory": "string or null",
-      "fineMotor": "string or null",
-      "attention": "string or null",
-      "autism": "string or null",
-      "adhd": "string or null",
-      "communication": "string or null"
-    }` : '';
-
-  const avoidRepeatSection = pastActivities.length > 0
-    ? `\n\nAVOID REPEATING — The following activity titles have already been used for this theme in previous sessions. Do NOT use these titles or create activities that are substantially similar to them:\n${pastActivities.map((t) => `- ${t}`).join('\n')}`
-    : '';
-
-  const prompt = `You are an experienced early childhood educator. Generate exactly 15 engaging, developmentally appropriate activities for a playgroup session — exactly 3 activities for each of the 5 activity types listed below.
-
-Weekly Theme: "${theme}"
-${ageGroupLine}
-${materialsBlock}
-Session Duration: ${duration} minutes${weatherLine ? `\n${weatherLine}` : ''}${weatherNote ? `\n${weatherNote}` : ''}${attendanceLine ? `\n${attendanceLine}` : ''}${avoidRepeatSection}${allAgesInstructions}${neuroSection}
-
-You MUST produce exactly 3 activities for EACH of these types (15 activities total):
-- "arts-crafts"      → hands-on making, drawing, painting, crafting
-- "sensory"          → touch, smell, texture, messy play, sensory exploration
-- "music-movement"   → songs, rhythm, dance, movement games
-- "storytelling"     → stories, puppets, role-play, books, imaginative play
-- "outdoor"          → garden, nature, physical play, fresh-air activities
-
-Return ONLY a valid JSON array of exactly 15 objects. No markdown, no explanation — just the raw JSON array:
-${jsonSchemaExample.replace(/^\]/m, `${neuroSchemaLine}\n]`)}
-
-${durationNote}
-
-All activities must be themed around "${theme}", safe for children, and suitable for the age group.
-Group the 15 activities in order: 3 arts-crafts, then 3 sensory, then 3 music-movement, then 3 storytelling, then 3 outdoor.`;
-
-  console.log('1. Starting generation request');
-
-  // No client-side timeout — the edge function / Vite middleware control the server-side
-  // timeout. Removing the AbortController avoids the client killing a slow but valid response.
+// Fetches a prompt and returns the full response text (handles both SSE and JSON paths)
+async function fetchPromptText(prompt: string): Promise<string> {
   let response: Response;
   try {
     response = await fetch('/api/generate', {
@@ -226,25 +112,20 @@ Group the 15 activities in order: 3 arts-crafts, then 3 sensory, then 3 music-mo
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
-        max_tokens: 16000,
+        max_tokens: 5000,
         stream: true,
         messages: [{ role: 'user', content: prompt }],
       }),
     });
   } catch (err) {
-    const error = err as Error;
-    console.log('ERROR (fetch threw):', error.message);
     throw new Error('Could not reach the server. Please check your connection and try again.');
   }
-
-  console.log('2. Response status:', response.status, '| content-type:', response.headers.get('content-type'));
 
   if (!response.ok) {
     const errorBody = await response.json().catch(() => ({}));
     const msg =
       (errorBody as { error?: { message?: string } }).error?.message ||
       `Server error (${response.status}). Please try again.`;
-    console.log('ERROR (non-ok response):', msg);
     throw new Error(msg);
   }
 
@@ -252,62 +133,26 @@ Group the 15 activities in order: 3 arts-crafts, then 3 sensory, then 3 music-mo
   let fullText = '';
 
   if (contentType.includes('application/json')) {
-    // Edge function path: non-streaming, full JSON in one shot
-    let data: Record<string, unknown>;
-    try {
-      data = await response.json();
-    } catch (jsonErr) {
-      console.log('ERROR: failed to parse response JSON:', (jsonErr as Error).message);
-      throw new Error('Could not parse server response. Please try again.');
-    }
-
-    console.log('3. Anthropic stop_reason:', (data as { stop_reason?: string }).stop_reason ?? 'unknown');
-
+    const data = await response.json() as Record<string, unknown>;
     if ((data as { error?: { message?: string } }).error?.message) {
-      const msg = (data as { error: { message: string } }).error.message;
-      console.log('ERROR (Anthropic error in body):', msg);
-      throw new Error(msg);
+      throw new Error((data as { error: { message: string } }).error.message);
     }
-
     const contentBlocks = (data as { content?: { type: string; text?: string }[] }).content;
-    const textBlock = Array.isArray(contentBlocks)
-      ? contentBlocks.find((b) => b.type === 'text')
-      : undefined;
+    const textBlock = Array.isArray(contentBlocks) ? contentBlocks.find((b) => b.type === 'text') : undefined;
     fullText = textBlock?.text ?? '';
-
-    if (!fullText) {
-      console.log('ERROR: no text in JSON response. data keys:', Object.keys(data));
-      throw new Error('Received an empty response from the AI. Please try again.');
-    }
-
-    onStream(fullText);
   } else {
-    // Vite dev path: SSE streaming
-    if (!response.body) {
-      console.log('ERROR: no response body');
-      throw new Error('No response body from server.');
-    }
+    if (!response.body) throw new Error('No response body from server.');
 
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
     let buffer = '';
-    let chunkCount = 0;
 
     try {
       while (true) {
         const { done, value } = await reader.read();
-        if (done) {
-          console.log('Stream done. Total text length:', fullText.length);
-          break;
-        }
+        if (done) break;
 
-        chunkCount++;
-        const rawChunk = decoder.decode(value, { stream: true });
-        if (chunkCount <= 3) {
-          console.log(`3. Raw chunk #${chunkCount}:`, JSON.stringify(rawChunk.slice(0, 200)));
-        }
-
-        buffer += rawChunk;
+        buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split('\n');
         buffer = lines.pop() ?? '';
 
@@ -330,46 +175,170 @@ Group the 15 activities in order: 3 arts-crafts, then 3 sensory, then 3 music-mo
               parsed.delta.text
             ) {
               fullText += parsed.delta.text;
-              onStream(fullText);
             }
           } catch (parseErr) {
             const pe = parseErr as Error;
-            if (!pe.message.startsWith('Unexpected token')) {
-              console.log('ERROR (SSE parse):', pe.message);
-              throw parseErr;
-            }
+            if (!pe.message.startsWith('Unexpected token')) throw parseErr;
           }
         }
       }
     } finally {
       reader.cancel().catch(() => {});
     }
-
-    if (!fullText) {
-      console.log('ERROR: empty SSE stream');
-      throw new Error('Received an empty response from the AI. Please try again.');
-    }
   }
 
-  // Extract JSON array from the response text (both paths)
-  const jsonMatch = fullText.match(/\[[\s\S]*\]/);
+  if (!fullText) throw new Error('Received an empty response from the AI. Please try again.');
+  return fullText;
+}
+
+function buildCategoryPrompt(category: ActivityType, params: SharedParams): string {
+  const { theme, ageGroup, materials, duration, weather, attendance, includeNeuroAdaptations, pastActivities } = params;
+  const isAllAges = ageGroup === '0-5';
+
+  const weatherLine = weather ? `Today's Weather: ${WEATHER_LABELS[weather] ?? weather}` : '';
+  const weatherNote =
+    weather === 'rainy' || weather === 'cold'
+      ? 'IMPORTANT: Since it is rainy/cold, if this is an outdoor activity modify it to work indoors — suggest an indoor alternative that captures the spirit of outdoor play.'
+      : weather === 'hot'
+      ? 'Prioritise water play, shade-based activities, and cooling activities suitable for hot weather.'
+      : '';
+
+  const attendanceLine =
+    attendance.count > 0
+      ? `Expected Attendance: ${attendance.count} children${attendance.ageNote ? ` (${attendance.ageNote})` : ''}. Scale materials and group management for ${attendance.count} children.`
+      : '';
+
+  const materialsBlock = materials
+    ? `Available Materials: ${materials}\n\nIMPORTANT MATERIALS CONSTRAINT: Only suggest activities using the materials listed above. Every item in the "materials" array must come from this list (or a basic consumable like water, tape, or scissors that any playgroup would have).`
+    : 'Available Materials: basic craft supplies, paper, crayons, play dough, blocks';
+
+  const ageGroupLine = isAllAges
+    ? 'Age Group: Mixed ages, 0–5 years (babies through preschoolers all attending together)'
+    : `Age Group: ${ageGroup} years old`;
+
+  const allAgesInstructions = isAllAges ? `
+
+IMPORTANT — MIXED AGE SESSION: For each activity:
+- Set "bestAgeGroup" to the age range it is BEST suited for (e.g. "2–3 yrs")
+- Set "ageAdaptations" with brief adaptations for the OTHER age bands only:
+  { "0–1 yrs": "...", "1–2 yrs": "...", "3–5 yrs": "..." }
+Keep each adaptation to 1–2 sentences — practical and specific.` : '';
+
+  const avoidRepeatSection = pastActivities.length > 0
+    ? `\n\nAVOID REPEATING — Do NOT use these previously used titles or create substantially similar activities:\n${pastActivities.map((t) => `- ${t}`).join('\n')}`
+    : '';
+
+  const neuroSection = includeNeuroAdaptations ? `
+
+🧠 NEURODIVERSITY-FRIENDLY ADAPTATIONS REQUIRED:
+Include a "neuroAdaptations" field with practical adaptations (1–2 sentences each, or null if not applicable):
+{
+  "sensory": "adjustments for sensory sensitivities",
+  "fineMotor": "modifications for limited hand dexterity",
+  "attention": "strategies for short attention spans",
+  "autism": "predictability and structure supports",
+  "adhd": "movement and engagement supports",
+  "communication": "AAC and low-verbal options"
+}` : '';
+
+  const ageAdaptationsSchema = isAllAges ? `
+    "bestAgeGroup": "2–3 yrs",
+    "ageAdaptations": { "0–1 yrs": "...", "1–2 yrs": "...", "3–5 yrs": "..." },` : '';
+
+  const neuroSchemaLine = includeNeuroAdaptations ? `
+    "neuroAdaptations": { "sensory": "string or null", "fineMotor": "string or null", "attention": "string or null", "autism": "string or null", "adhd": "string or null", "communication": "string or null" },` : '';
+
+  const durationNote = isAllAges
+    ? 'For "durationEstimate": provide a realistic time range factoring in mixed-age transitions, e.g. "15–20 mins".'
+    : 'For "durationEstimate": provide a realistic time range for this age group. Younger children (0–2) need more setup time. e.g. "10–15 mins".';
+
+  return `You are an experienced early childhood educator. Generate exactly 3 "${category}" activities for a playgroup session.
+
+Weekly Theme: "${theme}"
+Activity Type: "${category}" — ${CATEGORY_LABELS[category]}
+${ageGroupLine}
+${materialsBlock}
+Session Duration: ${duration} minutes${weatherLine ? `\n${weatherLine}` : ''}${weatherNote ? `\n${weatherNote}` : ''}${attendanceLine ? `\n${attendanceLine}` : ''}${avoidRepeatSection}${allAgesInstructions}${neuroSection}
+
+Return ONLY a valid JSON array of exactly 3 objects. No markdown, no explanation — just the raw JSON array:
+[
+  {
+    "name": "Activity name",
+    "description": "Brief 1-sentence description",
+    "activityType": "${category}",
+    "ageGroups": ["array of applicable: 0-1, 1-2, 2-3, 3-5"],
+    "materials": ["material 1", "material 2"],
+    "instructions": ["Step 1: ...", "Step 2: ...", "Step 3: ..."],
+    "developmentalBenefits": ["benefit 1", "benefit 2"],
+    "durationEstimate": "10–15 mins",${ageAdaptationsSchema}${neuroSchemaLine}
+  }
+]
+
+${durationNote}
+All activities must be themed around "${theme}", safe for children, and suitable for the age group.`;
+}
+
+async function fetchCategory(category: ActivityType, params: SharedParams): Promise<Activity[]> {
+  const prompt = buildCategoryPrompt(category, params);
+  const text = await fetchPromptText(prompt);
+
+  const jsonMatch = text.match(/\[[\s\S]*\]/);
   if (!jsonMatch) {
-    console.log('ERROR: no JSON array found. First 500 chars:', fullText.slice(0, 500));
-    throw new Error('Could not parse activities from the response. Please try again.');
+    throw new Error(`Could not parse ${category} activities from the response.`);
   }
 
   let parsed: GeneratedActivity[];
   try {
     parsed = JSON.parse(jsonMatch[0]) as GeneratedActivity[];
-  } catch (jsonErr) {
-    console.log('ERROR: JSON.parse failed:', (jsonErr as Error).message, '| snippet:', jsonMatch[0].slice(0, 200));
-    throw new Error('Could not parse activities from the response. Please try again.');
+  } catch {
+    throw new Error(`Could not parse ${category} activities from the response.`);
   }
 
   if (!Array.isArray(parsed)) throw new Error('Invalid response format.');
 
-  console.log('4. Final parsed result:', parsed.length, 'activities');
-
-  return parsed.map((item) => sanitizeActivity(item, theme));
+  return parsed.map((item) => sanitizeActivity(item, params.theme));
 }
 
+export async function generateActivities(
+  theme: string,
+  ageGroup: string,
+  materials: string,
+  duration: number,
+  onStream: (text: string) => void,
+  weather = '',
+  attendance = { count: 0, ageNote: '' },
+  includeNeuroAdaptations = false,
+  pastActivities: string[] = [],
+  onPartialResults?: (activities: Activity[]) => void,
+): Promise<Activity[]> {
+  console.log('1. Starting parallel generation for 5 categories');
+
+  const params: SharedParams = { theme, ageGroup, materials, duration, weather, attendance, includeNeuroAdaptations, pastActivities };
+  const accumulated: Activity[] = [];
+
+  const results = await Promise.allSettled(
+    VALID_TYPES.map(async (category) => {
+      const acts = await fetchCategory(category, params);
+      accumulated.push(...acts);
+      const sorted = [...accumulated].sort((a, b) => CATEGORY_ORDER[a.activityType] - CATEGORY_ORDER[b.activityType]);
+      onPartialResults?.(sorted);
+      onStream(`${accumulated.length} of 15 activities ready`);
+      console.log(`Category "${category}" done (${acts.length} activities)`);
+      return acts;
+    }),
+  );
+
+  const failures = results.filter((r) => r.status === 'rejected');
+  if (failures.length === VALID_TYPES.length) {
+    const firstError = (failures[0] as PromiseRejectedResult).reason as Error;
+    throw new Error(firstError.message || 'Could not generate activities. Please try again.');
+  }
+
+  if (failures.length > 0) {
+    console.log(`${failures.length} category/categories failed — showing ${accumulated.length} activities`);
+  }
+
+  console.log(`4. Final result: ${accumulated.length} activities`);
+
+  return [...accumulated].sort((a, b) => CATEGORY_ORDER[a.activityType] - CATEGORY_ORDER[b.activityType]);
+}

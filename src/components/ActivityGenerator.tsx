@@ -304,6 +304,7 @@ export default function ActivityGenerator({
       const activities = await generateActivities(
         theme.trim(), ageGroup, materials, duration, setStreamText,
         weather, { count: attendanceCount, ageNote: attendanceAgeNote }, includeNeuro, pastTitles,
+        (partial) => setGeneratedActivities([...partial]),
       );
       setGeneratedActivities(activities);
       setStreamText('');
@@ -824,8 +825,8 @@ export default function ActivityGenerator({
 
         </div>{/* /ag-card */}
 
-        {/* ── Solitaire game (shown while generating) ── */}
-        {generating && (
+        {/* ── Solitaire game (shown while generating, before first results arrive) ── */}
+        {generating && generatedActivities.length === 0 && (
           <SolitaireGame
             loadingMessage={LOADING_MESSAGES[loadingMsgIndex].text}
             loadingEmoji={LOADING_MESSAGES[loadingMsgIndex].emoji}
