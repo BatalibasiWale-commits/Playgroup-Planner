@@ -4,7 +4,7 @@ import { ACTIVITY_TYPE_CONFIG, AGE_GROUP_CONFIG } from '../types';
 import { generateActivities } from '../utils/api';
 import { getPastActivityTitles, saveActivityTitles } from '../utils/activityHistory';
 import { storage } from '../utils/storage';
-
+import PhotoModal from './PhotoModal';
 import './ActivityGenerator.css';
 
 interface Props {
@@ -1283,6 +1283,7 @@ function GeneratedActivityCard({
   const [expanded, setExpanded] = useState(false);
   const [expandAdapt, setExpandAdapt] = useState(false);
   const [expandNeuro, setExpandNeuro] = useState(false);
+  const [photoOpen, setPhotoOpen] = useState(false);
   const typeCfg = ACTIVITY_TYPE_CONFIG[activity.activityType];
 
   const hasNeuro = activity.neuroAdaptations &&
@@ -1399,23 +1400,24 @@ function GeneratedActivityCard({
           >
             {expanded ? '▲ Show less' : '▼ Instructions & benefits'}
           </button>
-          <a
-            href={`https://www.pinterest.com/search/pins/?q=${encodeURIComponent(activity.name + ' toddler activity')}`}
-            target="_blank"
-            rel="noopener noreferrer"
+          <button
+            onClick={() => setPhotoOpen(true)}
             style={{
               display: 'inline-flex', alignItems: 'center', gap: 5,
               padding: '8px 14px', borderRadius: 999,
-              background: '#E60023', color: '#fff',
-              fontSize: 12, fontWeight: 700,
-              textDecoration: 'none', lineHeight: 1,
-              transition: 'opacity 0.15s', minHeight: 36,
+              background: 'linear-gradient(135deg,#f97316,#ec4899)', color: '#fff',
+              fontSize: 12, fontWeight: 700, border: 'none',
+              cursor: 'pointer', lineHeight: 1, minHeight: 36,
+              transition: 'opacity 0.15s',
             }}
             onMouseEnter={e => (e.currentTarget.style.opacity = '0.85')}
             onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
           >
-            📌 Pinterest
-          </a>
+            📸 See examples
+          </button>
+          {photoOpen && (
+            <PhotoModal activityName={activity.name} onClose={() => setPhotoOpen(false)} />
+          )}
         </div>
 
         {activity.ageAdaptations && Object.keys(activity.ageAdaptations).length > 0 && (
