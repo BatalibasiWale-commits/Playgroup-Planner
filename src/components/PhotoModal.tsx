@@ -10,12 +10,40 @@ interface UnsplashPhoto {
 
 interface Props {
   activityName: string;
+  activityType: string;
   onClose: () => void;
 }
 
 const ACCESS_KEY = import.meta.env.VITE_UNSPLASH_ACCESS_KEY as string | undefined;
 
-export default function PhotoModal({ activityName, onClose }: Props) {
+// Words too generic to help Unsplash find relevant results
+const STOP_WORDS = new Set([
+  'the', 'a', 'an', 'and', 'or', 'for', 'of', 'to', 'with', 'in', 'on', 'at',
+  'fun', 'session', 'time', 'day', 'our', 'your', 'my', 'activity', 'game',
+  'making', 'magic', 'magical', 'wonderful', 'amazing', 'super', 'little',
+]);
+
+// Type-specific anchor terms that guide Unsplash toward the right kind of photo
+const TYPE_ANCHORS: Record<string, string> = {
+  'arts-crafts':    'kids craft preschool DIY',
+  'sensory':        'sensory play toddler bin',
+  'music-movement': 'kids movement dance preschool',
+  'storytelling':   'kids storytelling preschool',
+  'outdoor':        'kids outdoor nature play',
+};
+
+function buildQuery(activityName: string, activityType: string): string {
+  const anchor = TYPE_ANCHORS[activityType] ?? 'kids activity preschool';
+  const nameWords = activityName
+    .toLowerCase()
+    .replace(/[^a-z\s]/g, '')
+    .split(/\s+/)
+    .filter((w) => w.length > 2 && !STOP_WORDS.has(w))
+    .slice(0, 3);
+  return `${nameWords.join(' ')} ${anchor}`.trim();
+}
+
+export default function PhotoModal({ activityName, activityType, onClose }: Props) {
   const [photos, setPhotos] = useState<UnsplashPhoto[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -27,7 +55,7 @@ export default function PhotoModal({ activityName, onClose }: Props) {
       return;
     }
 
-    const query = `${activityName} kids toddler activity`;
+    const query = buildQuery(activityName, activityType);
     fetch(
       `https://api.unsplash.com/search/photos?query=${encodeURIComponent(query)}&per_page=9&client_id=${ACCESS_KEY}`,
     )
@@ -41,7 +69,7 @@ export default function PhotoModal({ activityName, onClose }: Props) {
       })
       .catch(() => setError('Could not load photos. Please try again.'))
       .finally(() => setLoading(false));
-  }, [activityName]);
+  }, [activityName, activityType]);
 
   return (
     <div

@@ -1416,7 +1416,7 @@ function GeneratedActivityCard({
             📸 See examples
           </button>
           {photoOpen && (
-            <PhotoModal activityName={activity.name} onClose={() => setPhotoOpen(false)} />
+            <PhotoModal activityName={activity.name} activityType={activity.activityType} onClose={() => setPhotoOpen(false)} />
           )}
         </div>
 
